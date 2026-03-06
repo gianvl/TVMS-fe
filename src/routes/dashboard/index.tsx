@@ -16,25 +16,9 @@ export const Route = createFileRoute("/dashboard/")({
   component: DashboardPage,
 });
 
-// Generate month options for 2025 (dataset range)
-function getMonthOptions(): { value: string; label: string }[] {
-  const options: { value: string; label: string }[] = [];
-
-  for (let month = 11; month >= 0; month--) {
-    const date = new Date(2025, month, 1);
-    const value = `2025-${String(month + 1).padStart(2, "0")}`;
-    const label = date.toLocaleDateString("en-US", {
-      month: "long",
-      year: "numeric",
-    });
-    options.push({ value, label });
-  }
-
-  return options;
+function getDefaultDateRange() {
+  return { from: "2025-01-01", to: "2025-12-31" };
 }
-
-const MONTH_OPTIONS = getMonthOptions();
-const DEFAULT_MONTH = MONTH_OPTIONS[0].value; // Most recent month
 
 const CITY_OPTIONS = Object.entries(NCR_LOCATIONS)
   .filter(
@@ -91,11 +75,11 @@ function mapLocationsToCoords(
 
 function DashboardPage() {
   const { user } = useAuth();
-  const [selectedMonth, setSelectedMonth] = useState(DEFAULT_MONTH);
+  const defaultRange = useMemo(() => getDefaultDateRange(), []);
+  const [dateFrom, setDateFrom] = useState(defaultRange.from);
+  const [dateTo, setDateTo] = useState(defaultRange.to);
   const [selectedCity, setSelectedCity] = useState("");
 
-  // Convert month to API date format
-  const dateFilter = `${selectedMonth}-01`;
   const cityFilter = selectedCity || undefined;
 
   // Table data - paginated for display
@@ -106,23 +90,18 @@ function DashboardPage() {
     setPage,
   } = useApprehensions({
     limit: 10,
-    date: dateFilter,
+    dateFrom,
+    dateTo,
     placeOfApprehension: cityFilter,
   });
 
   // Stats data - from dedicated endpoint
   const { stats, isLoading: statsLoading } = useStats({
-    month: selectedMonth,
+    dateFrom,
+    dateTo,
     topLimit: 10,
     placeOfApprehension: cityFilter,
   });
-
-  const handleMonthChange = useCallback(
-    (e: React.ChangeEvent<HTMLSelectElement>) => {
-      setSelectedMonth(e.target.value);
-    },
-    []
-  );
 
   const handleCityChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -144,8 +123,7 @@ function DashboardPage() {
     [stats?.topLocations]
   );
 
-  const selectedMonthLabel =
-    MONTH_OPTIONS.find((o) => o.value === selectedMonth)?.label ?? selectedMonth;
+  const dateRangeLabel = `${new Date(dateFrom).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} - ${new Date(dateTo).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`;
 
   const isLoading = tableLoading || statsLoading;
 
@@ -161,25 +139,36 @@ function DashboardPage() {
     >
       {/* Filter Bar */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-lg border border-gray-200 bg-white p-4">
-        <div className="flex items-center gap-6">
+        <div className="flex flex-wrap items-center gap-6">
           <div className="flex items-center gap-2">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#1a3a5c]/10">
               <Calendar className="h-4 w-4 text-[#1a3a5c]" />
             </div>
             <div>
-              <p className="text-xs font-medium text-gray-500">Month</p>
-              <select
-                value={selectedMonth}
-                onChange={handleMonthChange}
+              <p className="text-xs font-medium text-gray-500">From</p>
+              <input
+                type="date"
+                value={dateFrom}
+                min="2025-01-01"
+                max="2025-12-31"
+                onChange={(e) => setDateFrom(e.target.value)}
                 disabled={isLoading}
-                className="mt-0.5 w-40 cursor-pointer rounded border-none bg-transparent p-0 text-sm font-semibold text-gray-900 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {MONTH_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+                className="mt-0.5 cursor-pointer rounded border-none bg-transparent p-0 text-sm font-semibold text-gray-900 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50"
+              />
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div>
+              <p className="text-xs font-medium text-gray-500">To</p>
+              <input
+                type="date"
+                value={dateTo}
+                min="2025-01-01"
+                max="2025-12-31"
+                onChange={(e) => setDateTo(e.target.value)}
+                disabled={isLoading}
+                className="mt-0.5 cursor-pointer rounded border-none bg-transparent p-0 text-sm font-semibold text-gray-900 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50"
+              />
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -217,7 +206,7 @@ function DashboardPage() {
         <StatsCard
           value={stats?.total.toLocaleString() ?? "-"}
           label="TOTAL APPREHENSIONS"
-          subtitle={selectedMonthLabel}
+          subtitle={dateRangeLabel}
         />
         <div className="rounded-lg border border-gray-200 bg-white p-4">
           <p className="text-sm font-medium text-gray-600">TOP VIOLATIONS</p>

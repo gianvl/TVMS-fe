@@ -48,6 +48,8 @@ export interface ApprehensionFilters {
   page?: number;
   limit?: number;
   date?: string;
+  dateFrom?: string;
+  dateTo?: string;
   agency?: string;
   violation?: string;
   plateNumber?: string;

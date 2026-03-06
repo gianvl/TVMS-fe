@@ -85,46 +85,19 @@ const CITY_OPTIONS = Object.entries(NCR_LOCATIONS)
   .map(([key, data]) => ({ value: key, label: data.name }))
   .sort((a, b) => a.label.localeCompare(b.label));
 
-const MONTHS = [
-  { value: "", label: "All Months" },
-  { value: "01", label: "January" },
-  { value: "02", label: "February" },
-  { value: "03", label: "March" },
-  { value: "04", label: "April" },
-  { value: "05", label: "May" },
-  { value: "06", label: "June" },
-  { value: "07", label: "July" },
-  { value: "08", label: "August" },
-  { value: "09", label: "September" },
-  { value: "10", label: "October" },
-  { value: "11", label: "November" },
-  { value: "12", label: "December" },
-];
-
-const YEARS = ["2025", "2024", "2023"];
-
-function getDateRange(month: string, year: string): { from: string; to: string } {
-  if (!month) {
-    return { from: `${year}-01-01`, to: `${year}-12-31` };
-  }
-  const m = parseInt(month, 10);
-  const y = parseInt(year, 10);
-  const lastDay = new Date(y, m, 0).getDate();
-  return {
-    from: `${year}-${month}-01`,
-    to: `${year}-${month}-${String(lastDay).padStart(2, "0")}`,
-  };
+function getDefaultDateRange() {
+  return { from: "2025-01-01", to: "2025-12-31" };
 }
 
 function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedMonth, setSelectedMonth] = useState("");
-  const [selectedYear, setSelectedYear] = useState("2025");
+  const [defaultRange] = useState(() => getDefaultDateRange());
+  const [dateFrom, setDateFrom] = useState(defaultRange.from);
+  const [dateTo, setDateTo] = useState(defaultRange.to);
   const [selectedCity, setSelectedCity] = useState("");
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  const { from: dateFrom, to: dateTo } = getDateRange(selectedMonth, selectedYear);
   const cityFilter = selectedCity || undefined;
 
   const [trends, setTrends] = useState<TrendsSeries[]>([]);
@@ -195,43 +168,37 @@ function AnalyticsPage() {
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2">
             <label
-              htmlFor="month-select"
+              htmlFor="date-from"
               className="text-sm font-medium text-gray-700"
             >
-              Month:
+              From:
             </label>
-            <select
-              id="month-select"
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(e.target.value)}
+            <input
+              id="date-from"
+              type="date"
+              value={dateFrom}
+              min="2025-01-01"
+              max="2025-12-31"
+              onChange={(e) => setDateFrom(e.target.value)}
               className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
-            >
-              {MONTHS.map((m) => (
-                <option key={m.value} value={m.value}>
-                  {m.label}
-                </option>
-              ))}
-            </select>
+            />
           </div>
           <div className="flex items-center gap-2">
             <label
-              htmlFor="year-select"
+              htmlFor="date-to"
               className="text-sm font-medium text-gray-700"
             >
-              Year:
+              To:
             </label>
-            <select
-              id="year-select"
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(e.target.value)}
+            <input
+              id="date-to"
+              type="date"
+              value={dateTo}
+              min="2025-01-01"
+              max="2025-12-31"
+              onChange={(e) => setDateTo(e.target.value)}
               className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
-            >
-              {YEARS.map((y) => (
-                <option key={y} value={y}>
-                  {y}
-                </option>
-              ))}
-            </select>
+            />
           </div>
           <div className="flex items-center gap-2">
             <label
