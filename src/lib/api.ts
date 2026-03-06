@@ -124,6 +124,8 @@ export async function getApprehensions(
   if (filters.page) params.append("page", String(filters.page));
   if (filters.limit) params.append("limit", String(filters.limit));
   if (filters.date) params.append("date", filters.date);
+  if (filters.dateFrom) params.append("dateFrom", filters.dateFrom);
+  if (filters.dateTo) params.append("dateTo", filters.dateTo);
   if (filters.agency) params.append("agency", filters.agency);
   if (filters.violation) params.append("violation", filters.violation);
   if (filters.plateNumber) params.append("plateNumber", filters.plateNumber);
