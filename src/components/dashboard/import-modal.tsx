@@ -101,6 +101,17 @@ function normalizeKey(raw: string): string {
     .trim();
 }
 
+// A row is real apprehension data only if it has a parseable date.
+// This filters out junk rows (stray cells, leftover formatting, totals)
+// that Excel often leaves far past the visible data.
+function hasValidDate(value: unknown): boolean {
+  if (value === null || value === undefined) return false;
+  if (typeof value === "number") return true; // Excel date serial
+  const s = String(value).trim();
+  if (s === "") return false;
+  return !isNaN(new Date(s).getTime());
+}
+
 interface ParsedSheet {
   fields: string[]; // mapped field name per column
   rows: Record<string, unknown>[];
@@ -218,7 +229,12 @@ function parseSheet(sheet: XLSX.WorkSheet): ParsedSheet {
 
   for (let r = dataStartIdx; r < raw.length; r++) {
     const rowData = raw[r] as unknown[];
-    if (!rowData || rowData.every((c) => c === null || c === undefined || c === ""))
+    if (
+      !rowData ||
+      rowData.every(
+        (c) => c === null || c === undefined || String(c).trim() === ""
+      )
+    )
       continue;
 
     const obj: Record<string, unknown> = {};
@@ -227,6 +243,10 @@ function parseSheet(sheet: XLSX.WorkSheet): ParsedSheet {
       if (field === "_skip_" || field === "_unknown_") continue;
       obj[field] = rowData[col] ?? null;
     }
+
+    // Drop rows without a real date — they're spreadsheet junk, not records.
+    if (!hasValidDate(obj.dateOfApprehension)) continue;
+
     rows.push(obj);
     rowIndices.push(r + 1); // Excel rows are 1-based
   }
