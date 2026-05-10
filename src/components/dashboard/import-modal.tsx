@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,7 +8,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
-  Upload,
   FileSpreadsheet,
   CheckCircle2,
   XCircle,
@@ -23,9 +22,10 @@ interface ImportModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onComplete: () => void;
+  file: File | null;
 }
 
-type Step = "upload" | "preview" | "importing" | "done";
+type Step = "preview" | "importing" | "done";
 
 interface ImportResult {
   success: number;
@@ -319,23 +319,21 @@ const PREVIEW_HEADERS: Record<(typeof PREVIEW_COLUMNS)[number], string> = {
   placeOfApprehension: "Location",
 };
 
-export function ImportModal({ open, onOpenChange, onComplete }: ImportModalProps) {
-  const [step, setStep] = useState<Step>("upload");
+export function ImportModal({ open, onOpenChange, onComplete, file }: ImportModalProps) {
+  const [step, setStep] = useState<Step>("preview");
   const [parsedRows, setParsedRows] = useState<ApprehensionInput[]>([]);
   const [fileName, setFileName] = useState("");
   const [result, setResult] = useState<ImportResult | null>(null);
   const [validation, setValidation] = useState<ValidationResult | null>(null);
   const [parseError, setParseError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const reset = useCallback(() => {
-    setStep("upload");
+    setStep("preview");
     setParsedRows([]);
     setFileName("");
     setResult(null);
     setValidation(null);
     setParseError(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
   }, []);
 
   const handleOpenChange = useCallback(
@@ -350,7 +348,10 @@ export function ImportModal({ open, onOpenChange, onComplete }: ImportModalProps
     [step, onOpenChange, onComplete, reset]
   );
 
-  const handleFile = useCallback((file: File) => {
+  // Parse file when modal opens with a new file
+  useEffect(() => {
+    if (!open || !file) return;
+
     setFileName(file.name);
     setParseError(null);
     setValidation(null);
@@ -381,7 +382,7 @@ export function ImportModal({ open, onOpenChange, onComplete }: ImportModalProps
       }
     };
     reader.readAsArrayBuffer(file);
-  }, []);
+  }, [open, file]);
 
   const handleImport = useCallback(async () => {
     setStep("importing");
@@ -410,61 +411,20 @@ export function ImportModal({ open, onOpenChange, onComplete }: ImportModalProps
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>
-            {step === "upload" && "Import Records"}
             {step === "preview" && "Preview Import"}
             {step === "importing" && "Importing..."}
             {step === "done" && "Import Complete"}
           </DialogTitle>
         </DialogHeader>
 
-        {/* Upload Step */}
-        {step === "upload" && (
-          <div className="space-y-3">
-            <div
-              className="flex cursor-pointer flex-col items-center justify-center gap-4 rounded-lg border-2 border-dashed border-gray-300 p-10 transition-colors hover:border-gray-400"
-              onClick={() => fileInputRef.current?.click()}
-              onDragOver={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-              }}
-              onDrop={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                const file = e.dataTransfer.files[0];
-                if (file) handleFile(file);
-              }}
-            >
-              <Upload className="h-10 w-10 text-gray-400" />
-              <div className="text-center">
-                <p className="text-sm font-medium text-gray-700">
-                  Click to upload or drag and drop
-                </p>
-                <p className="mt-1 text-xs text-gray-500">
-                  .xlsx, .xls, or .csv files
-                </p>
-              </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".xlsx,.xls,.csv"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleFile(file);
-                }}
-              />
-            </div>
-            {parseError && (
-              <div className="flex items-center gap-2 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                <XCircle className="h-4 w-4 shrink-0" />
-                {parseError}
-              </div>
-            )}
+        {/* Preview Step */}
+        {step === "preview" && parseError && (
+          <div className="flex items-center gap-2 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <XCircle className="h-4 w-4 shrink-0" />
+            {parseError}
           </div>
         )}
-
-        {/* Preview Step */}
-        {step === "preview" && (
+        {step === "preview" && !parseError && (
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-sm text-gray-600">
               <FileSpreadsheet className="h-4 w-4" />
@@ -583,10 +543,15 @@ export function ImportModal({ open, onOpenChange, onComplete }: ImportModalProps
 
         {/* Footer */}
         <DialogFooter>
-          {step === "preview" && (
+          {step === "preview" && parseError && (
+            <Button variant="outline" onClick={() => handleOpenChange(false)}>
+              Close
+            </Button>
+          )}
+          {step === "preview" && !parseError && (
             <>
-              <Button variant="outline" onClick={reset}>
-                Back
+              <Button variant="outline" onClick={() => handleOpenChange(false)}>
+                Cancel
               </Button>
               <Button
                 onClick={handleImport}
