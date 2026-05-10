@@ -1,5 +1,5 @@
 import { useMemo, useCallback, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Calendar, MapPin } from "lucide-react";
 import {
   DashboardLayout,
@@ -209,7 +209,15 @@ function DashboardPage() {
           subtitle={dateRangeLabel}
         />
         <div className="rounded-lg border border-gray-200 bg-white p-4">
-          <p className="text-sm font-medium text-gray-600">TOP VIOLATIONS</p>
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium text-gray-600">TOP VIOLATIONS</p>
+            <Link
+              to="/dashboard/analytics"
+              className="text-xs font-medium text-[#1a3a5c] hover:underline"
+            >
+              See more
+            </Link>
+          </div>
           <ul className="mt-2 space-y-1">
             {stats?.topViolations.slice(0, 3).map((v, i) => (
               <li
