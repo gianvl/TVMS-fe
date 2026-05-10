@@ -202,7 +202,7 @@ function DashboardPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <StatsCard
           value={stats?.total.toLocaleString() ?? "-"}
           label="TOTAL APPREHENSIONS"
@@ -221,26 +221,6 @@ function DashboardPage() {
                 </span>
                 <span className="shrink-0 text-xs text-gray-400">
                   {v.count.toLocaleString()}
-                </span>
-              </li>
-            )) ?? (
-              <li className="text-sm text-gray-400">-</li>
-            )}
-          </ul>
-        </div>
-        <div className="rounded-lg border border-gray-200 bg-white p-4">
-          <p className="text-sm font-medium text-gray-600">TOP LOCATIONS</p>
-          <ul className="mt-2 space-y-1">
-            {stats?.topLocations.slice(0, 3).map((loc, i) => (
-              <li
-                key={loc.location}
-                className="flex items-center justify-between text-sm"
-              >
-                <span className="font-semibold text-[#1a3a5c]">
-                  {i + 1}. {loc.location}
-                </span>
-                <span className="text-xs text-gray-400">
-                  {loc.count.toLocaleString()}
                 </span>
               </li>
             )) ?? (
