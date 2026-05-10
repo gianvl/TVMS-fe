@@ -176,14 +176,14 @@ function DashboardPage() {
               <MapPin className="h-4 w-4 text-[#1a3a5c]" />
             </div>
             <div>
-              <p className="text-xs font-medium text-gray-500">City</p>
+              <p className="text-xs font-medium text-gray-500">Location</p>
               <select
                 value={selectedCity}
                 onChange={handleCityChange}
                 disabled={isLoading}
                 className="mt-0.5 w-40 cursor-pointer rounded border-none bg-transparent p-0 text-sm font-semibold text-gray-900 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <option value="">All Cities</option>
+                <option value="">All Locations</option>
                 {CITY_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}

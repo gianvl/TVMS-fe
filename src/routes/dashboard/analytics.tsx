@@ -205,7 +205,7 @@ function AnalyticsPage() {
               htmlFor="city-select"
               className="text-sm font-medium text-gray-700"
             >
-              City:
+              Location:
             </label>
             <select
               id="city-select"
@@ -213,7 +213,7 @@ function AnalyticsPage() {
               onChange={(e) => setSelectedCity(e.target.value)}
               className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
             >
-              <option value="">All Cities</option>
+              <option value="">All Locations</option>
               {CITY_OPTIONS.map((c) => (
                 <option key={c.value} value={c.value}>
                   {c.label}
