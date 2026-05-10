@@ -1,5 +1,5 @@
 import { useMemo, useCallback, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Calendar, MapPin } from "lucide-react";
 import {
   DashboardLayout,
@@ -176,14 +176,14 @@ function DashboardPage() {
               <MapPin className="h-4 w-4 text-[#1a3a5c]" />
             </div>
             <div>
-              <p className="text-xs font-medium text-gray-500">City</p>
+              <p className="text-xs font-medium text-gray-500">Location</p>
               <select
                 value={selectedCity}
                 onChange={handleCityChange}
                 disabled={isLoading}
                 className="mt-0.5 w-40 cursor-pointer rounded border-none bg-transparent p-0 text-sm font-semibold text-gray-900 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <option value="">All Cities</option>
+                <option value="">All Locations</option>
                 {CITY_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
@@ -202,14 +202,22 @@ function DashboardPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <StatsCard
           value={stats?.total.toLocaleString() ?? "-"}
           label="TOTAL APPREHENSIONS"
           subtitle={dateRangeLabel}
         />
         <div className="rounded-lg border border-gray-200 bg-white p-4">
-          <p className="text-sm font-medium text-gray-600">TOP VIOLATIONS</p>
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium text-gray-600">TOP VIOLATIONS</p>
+            <Link
+              to="/dashboard/analytics"
+              className="text-xs font-medium text-[#1a3a5c] hover:underline"
+            >
+              See more
+            </Link>
+          </div>
           <ul className="mt-2 space-y-1">
             {stats?.topViolations.slice(0, 3).map((v, i) => (
               <li
@@ -221,26 +229,6 @@ function DashboardPage() {
                 </span>
                 <span className="shrink-0 text-xs text-gray-400">
                   {v.count.toLocaleString()}
-                </span>
-              </li>
-            )) ?? (
-              <li className="text-sm text-gray-400">-</li>
-            )}
-          </ul>
-        </div>
-        <div className="rounded-lg border border-gray-200 bg-white p-4">
-          <p className="text-sm font-medium text-gray-600">TOP LOCATIONS</p>
-          <ul className="mt-2 space-y-1">
-            {stats?.topLocations.slice(0, 3).map((loc, i) => (
-              <li
-                key={loc.location}
-                className="flex items-center justify-between text-sm"
-              >
-                <span className="font-semibold text-[#1a3a5c]">
-                  {i + 1}. {loc.location}
-                </span>
-                <span className="text-xs text-gray-400">
-                  {loc.count.toLocaleString()}
                 </span>
               </li>
             )) ?? (

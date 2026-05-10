@@ -67,6 +67,8 @@ function ViolationLogsPage() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const importInputRef = useRef<HTMLInputElement>(null);
   const [selectedRecord, setSelectedRecord] = useState<Apprehension | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -264,7 +266,24 @@ function ViolationLogsPage() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setIsImportOpen(true)}>
+            <input
+              ref={importInputRef}
+              type="file"
+              accept=".xlsx,.xls,.csv"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  setImportFile(file);
+                  setIsImportOpen(true);
+                }
+                e.target.value = "";
+              }}
+            />
+            <Button
+              variant="outline"
+              onClick={() => importInputRef.current?.click()}
+            >
               <Upload className="mr-2 h-4 w-4" />
               Import
             </Button>
@@ -442,8 +461,12 @@ function ViolationLogsPage() {
 
       <ImportModal
         open={isImportOpen}
-        onOpenChange={setIsImportOpen}
+        onOpenChange={(open) => {
+          setIsImportOpen(open);
+          if (!open) setImportFile(null);
+        }}
         onComplete={refetch}
+        file={importFile}
       />
     </DashboardLayout>
   );
