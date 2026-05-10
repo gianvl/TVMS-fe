@@ -104,12 +104,13 @@ function normalizeKey(raw: string): string {
 interface ParsedSheet {
   fields: string[]; // mapped field name per column
   rows: Record<string, unknown>[];
+  rowIndices: number[]; // 1-based Excel row number for each row in `rows`
 }
 
 function parseSheet(sheet: XLSX.WorkSheet): ParsedSheet {
   // Read as raw arrays to handle multi-row headers
   const raw = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1 });
-  if (raw.length < 2) return { fields: [], rows: [] };
+  if (raw.length < 2) return { fields: [], rows: [], rowIndices: [] };
 
   // Find the header row: first row where at least 3 cells have text
   let headerRowIdx = 0;
@@ -213,6 +214,7 @@ function parseSheet(sheet: XLSX.WorkSheet): ParsedSheet {
   // Parse data rows (everything after the header rows)
   const dataStartIdx = headerRows.length;
   const rows: Record<string, unknown>[] = [];
+  const rowIndices: number[] = [];
 
   for (let r = dataStartIdx; r < raw.length; r++) {
     const rowData = raw[r] as unknown[];
@@ -226,9 +228,10 @@ function parseSheet(sheet: XLSX.WorkSheet): ParsedSheet {
       obj[field] = rowData[col] ?? null;
     }
     rows.push(obj);
+    rowIndices.push(r + 1); // Excel rows are 1-based
   }
 
-  return { fields, rows };
+  return { fields, rows, rowIndices };
 }
 
 // --- Data conversion ---
@@ -322,6 +325,7 @@ const PREVIEW_HEADERS: Record<(typeof PREVIEW_COLUMNS)[number], string> = {
 export function ImportModal({ open, onOpenChange, onComplete, file }: ImportModalProps) {
   const [step, setStep] = useState<Step>("preview");
   const [parsedRows, setParsedRows] = useState<ApprehensionInput[]>([]);
+  const [rowIndices, setRowIndices] = useState<number[]>([]);
   const [fileName, setFileName] = useState("");
   const [result, setResult] = useState<ImportResult | null>(null);
   const [validation, setValidation] = useState<ValidationResult | null>(null);
@@ -330,6 +334,7 @@ export function ImportModal({ open, onOpenChange, onComplete, file }: ImportModa
   const reset = useCallback(() => {
     setStep("preview");
     setParsedRows([]);
+    setRowIndices([]);
     setFileName("");
     setResult(null);
     setValidation(null);
@@ -362,7 +367,7 @@ export function ImportModal({ open, onOpenChange, onComplete, file }: ImportModa
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
         const workbook = XLSX.read(data, { type: "array" });
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        const { fields, rows } = parseSheet(sheet);
+        const { fields, rows, rowIndices } = parseSheet(sheet);
 
         if (rows.length === 0) {
           setParseError("The file is empty or has no data rows.");
@@ -374,6 +379,7 @@ export function ImportModal({ open, onOpenChange, onComplete, file }: ImportModa
 
         const mapped = rows.map(mapRowToInput);
         setParsedRows(mapped);
+        setRowIndices(rowIndices);
         setStep("preview");
       } catch {
         setParseError(
@@ -395,7 +401,7 @@ export function ImportModal({ open, onOpenChange, onComplete, file }: ImportModa
         success: imported,
         failed,
         errors: apiErrors.map(
-          (e) => `Row ${e.row}: ${e.error}`
+          (e) => `Row ${rowIndices[e.row - 1] ?? e.row}: ${e.error}`
         ),
       });
     } catch (err) {
@@ -404,7 +410,7 @@ export function ImportModal({ open, onOpenChange, onComplete, file }: ImportModa
     }
 
     setStep("done");
-  }, [parsedRows]);
+  }, [parsedRows, rowIndices]);
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
