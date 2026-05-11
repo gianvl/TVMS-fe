@@ -280,7 +280,7 @@ function DashboardPage() {
       <Dialog open={isTopViolationsOpen} onOpenChange={setIsTopViolationsOpen}>
         <DialogContent
           className="z-[1001] max-w-md"
-          overlayClassName="z-[1000] bg-transparent"
+          overlayClassName="z-[1000] bg-black/70"
         >
           <DialogHeader>
             <DialogTitle>Top Violations</DialogTitle>
