@@ -1,5 +1,5 @@
 import { useMemo, useCallback, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { Calendar, MapPin } from "lucide-react";
 import {
   DashboardLayout,
@@ -7,6 +7,12 @@ import {
   ViolationMap,
   ViolationTable,
 } from "@/components/dashboard";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import type { LocationAggregation } from "@/components/dashboard/violation-map";
 import { useAuth } from "@/hooks/useAuth";
 import { useApprehensions, useStats } from "@/hooks/useApprehensions";
@@ -79,6 +85,7 @@ function DashboardPage() {
   const [dateFrom, setDateFrom] = useState(defaultRange.from);
   const [dateTo, setDateTo] = useState(defaultRange.to);
   const [selectedCity, setSelectedCity] = useState("");
+  const [isTopViolationsOpen, setIsTopViolationsOpen] = useState(false);
 
   const cityFilter = selectedCity || undefined;
 
@@ -211,12 +218,13 @@ function DashboardPage() {
         <div className="rounded-lg border border-gray-200 bg-white p-4">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-gray-600">TOP VIOLATIONS</p>
-            <Link
-              to="/dashboard/analytics"
+            <button
+              type="button"
+              onClick={() => setIsTopViolationsOpen(true)}
               className="text-xs font-medium text-[#1a3a5c] hover:underline"
             >
               See more
-            </Link>
+            </button>
           </div>
           <ul className="mt-2 space-y-1">
             {stats?.topViolations.slice(0, 3).map((v, i) => (
@@ -268,6 +276,31 @@ function DashboardPage() {
           />
         </div>
       </div>
+
+      <Dialog open={isTopViolationsOpen} onOpenChange={setIsTopViolationsOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Top Violations</DialogTitle>
+          </DialogHeader>
+          <ul className="max-h-96 space-y-2 overflow-auto">
+            {stats?.topViolations.map((v, i) => (
+              <li
+                key={v.violation}
+                className="flex items-center justify-between gap-3 border-b border-gray-100 pb-2 text-sm last:border-0"
+              >
+                <span className="font-semibold text-[#1a3a5c]">
+                  {i + 1}. {v.violation}
+                </span>
+                <span className="shrink-0 text-xs text-gray-500">
+                  {v.count.toLocaleString()}
+                </span>
+              </li>
+            )) ?? (
+              <li className="text-sm text-gray-400">No data</li>
+            )}
+          </ul>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }
