@@ -278,7 +278,10 @@ function DashboardPage() {
       </div>
 
       <Dialog open={isTopViolationsOpen} onOpenChange={setIsTopViolationsOpen}>
-        <DialogContent className="max-w-md" overlayClassName="bg-transparent">
+        <DialogContent
+          className="z-[1001] max-w-md"
+          overlayClassName="z-[1000] bg-transparent"
+        >
           <DialogHeader>
             <DialogTitle>Top Violations</DialogTitle>
           </DialogHeader>
